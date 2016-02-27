@@ -123,10 +123,6 @@ def weight(tree: CodeTree): Int = {
 			false
 		} else {
 			true 
-			/* trees.filter{
-      case Fork(l,r,c,w) => false
-      case Leaf(c,w) => true
-    }.size == 1 */
 		}
 	} 
 
@@ -170,31 +166,32 @@ def weight(tree: CodeTree): Int = {
 		if (trees.size < 2) {
 			trees
 		} else {
+			// needs work
 			val firstTree = trees.head
-					val secondTree = trees.tail.head
-					if (firstTree.isInstanceOf[Fork]) {
-						val firstFork = firstTree.asInstanceOf[Fork]
-								if (secondTree.isInstanceOf[Fork]) {
-									val secondFork = secondTree.asInstanceOf[Fork]
-											val newTree = Fork(firstTree, secondTree, firstFork.chars ::: secondFork.chars, firstFork.weight + secondFork.weight)
-											sort(trees.tail.tail,List(),newTree)
-								} else {
-									val secondLeaf = secondTree.asInstanceOf[Leaf]
-											val newTree = Fork(firstTree, secondTree, firstFork.chars :+ secondLeaf.char, firstFork.weight + secondLeaf.weight)
-											sort(trees.tail.tail,List(),newTree)
-								}
-					} else {
-						val firstLeaf = firstTree.asInstanceOf[Leaf]
-								if (secondTree.isInstanceOf[Fork]) {
-									val secondFork = secondTree.asInstanceOf[Fork]
-											val newTree = Fork(firstTree, secondTree,  secondFork.chars :+ firstLeaf.char, firstLeaf.weight + secondFork.weight)
-											sort(trees.tail.tail,List(),newTree)
-								} else {
-									val secondLeaf = secondTree.asInstanceOf[Leaf]
-											val newTree = Fork(firstTree, secondTree, List(firstLeaf.char,secondLeaf.char), firstLeaf.weight + secondLeaf.weight)
-											sort(trees.tail.tail,List(),newTree)
-								}
-					}
+			val secondTree = trees.tail.head
+			if (firstTree.isInstanceOf[Fork]) {
+				val firstFork = firstTree.asInstanceOf[Fork]
+				if (secondTree.isInstanceOf[Fork]) {
+					val secondFork = secondTree.asInstanceOf[Fork]
+					val newTree = Fork(firstTree, secondTree, firstFork.chars ::: secondFork.chars, firstFork.weight + secondFork.weight)
+					sort(trees.tail.tail,List(),newTree)
+				} else {
+					val secondLeaf = secondTree.asInstanceOf[Leaf]
+					val newTree = Fork(firstTree, secondTree, firstFork.chars :+ secondLeaf.char, firstFork.weight + secondLeaf.weight)
+					sort(trees.tail.tail,List(),newTree)
+				}
+			} else {
+				val firstLeaf = firstTree.asInstanceOf[Leaf]
+				if (secondTree.isInstanceOf[Fork]) {
+					val secondFork = secondTree.asInstanceOf[Fork]
+					val newTree = Fork(firstTree, secondTree,  secondFork.chars :+ firstLeaf.char, firstLeaf.weight + secondFork.weight)
+					sort(trees.tail.tail,List(),newTree)
+				} else {
+					val secondLeaf = secondTree.asInstanceOf[Leaf]
+					val newTree = Fork(firstTree, secondTree, List(firstLeaf.char,secondLeaf.char), firstLeaf.weight + secondLeaf.weight)
+					sort(trees.tail.tail,List(),newTree)
+				}
+			}
 		}
 	}
 
@@ -244,26 +241,26 @@ def weight(tree: CodeTree): Int = {
 			 */
 			def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
 
-		def decodeIter(treeIter: CodeTree, bitsIter: List[Bit]): Tuple2[Char,List[Bit]] = {
+				def decodeIter(treeIter: CodeTree, bitsIter: List[Bit]): Tuple2[Char,List[Bit]] = {
 
-				if (treeIter.isInstanceOf[Leaf]) {
-					Tuple2(treeIter.asInstanceOf[Leaf].char, bitsIter)
-				} else {
-					val treeFork = treeIter.asInstanceOf[Fork]
-							if (bitsIter.head == 0) {
-								decodeIter(treeFork.left, bitsIter.tail)
-							} else {
-								decodeIter(treeFork.right, bitsIter.tail)
-							}
+					if (treeIter.isInstanceOf[Leaf]) {
+						Tuple2(treeIter.asInstanceOf[Leaf].char, bitsIter)
+					} else {
+						val treeFork = treeIter.asInstanceOf[Fork]
+						if (bitsIter.head == 0) {
+							decodeIter(treeFork.left, bitsIter.tail)
+						} else {
+							decodeIter(treeFork.right, bitsIter.tail)
+						}
+					}
 				}
-		}
 
-		if (bits.isEmpty) {
-			List()
-		} else {
-			val dec = decodeIter(tree, bits)
-					List(dec._1) ::: decode(tree,dec._2)
-		}
+				if (bits.isEmpty) {
+					List()
+				} else {
+					val dec = decodeIter(tree, bits)
+							List(dec._1) ::: decode(tree,dec._2)
+				}
 	}
 
 	/**
@@ -295,29 +292,30 @@ def weight(tree: CodeTree): Int = {
 			def encode(tree: CodeTree)(text: List[Char]): List[Bit] = {
 
 				def encodeIter(treeIter: CodeTree, letter: Char, bits: List[Bit]): List[Bit] = {
-						//print("encodeIter " + letter + " "+ bits + " " + tree)
-						if (treeIter.isInstanceOf[Leaf]) {
-							bits
+					//print("encodeIter " + letter + " "+ bits + " " + tree)
+					if (treeIter.isInstanceOf[Leaf]) {
+						bits
+					} else {
+						val nodeLeft = treeIter.asInstanceOf[Fork].left
+						val nodeRight = treeIter.asInstanceOf[Fork].right
+						if ((nodeLeft.isInstanceOf[Fork] && nodeLeft.asInstanceOf[Fork].chars.contains(letter)) ||
+								(nodeLeft.isInstanceOf[Leaf] && nodeLeft.asInstanceOf[Leaf].char.equals(letter))) {
+							// left contains
+							encodeIter(nodeLeft, letter, bits :+ 0)
 						} else {
-							val nodeLeft = treeIter.asInstanceOf[Fork].left
-									val nodeRight = treeIter.asInstanceOf[Fork].right
-									if ((nodeLeft.isInstanceOf[Fork] && nodeLeft.asInstanceOf[Fork].chars.contains(letter)) ||
-											(nodeLeft.isInstanceOf[Leaf] && nodeLeft.asInstanceOf[Leaf].char.equals(letter))) {
-										// left contains
-										encodeIter(nodeLeft, letter, bits :+ 0)
-									} else {
-										if ((nodeRight.isInstanceOf[Fork] && nodeRight.asInstanceOf[Fork].chars.contains(letter)) ||
-												(nodeRight.isInstanceOf[Leaf] && nodeRight.asInstanceOf[Leaf].char.equals(letter))) {
-											// right contains
-											encodeIter(nodeRight, letter, bits :+ 1)
-										} else {
-											//never happens
-											print("OMG")
-											encodeIter(nodeRight, letter, bits)
-										}
-									}
+							if ((nodeRight.isInstanceOf[Fork] && nodeRight.asInstanceOf[Fork].chars.contains(letter)) ||
+									(nodeRight.isInstanceOf[Leaf] && nodeRight.asInstanceOf[Leaf].char.equals(letter))) {
+								// right contains
+								encodeIter(nodeRight, letter, bits :+ 1)
+							} else {
+								//never happens
+								print("OMG")
+								encodeIter(nodeRight, letter, bits)
+							}
 						}
+					}
 				}
+
 				def join(tree: CodeTree)(text: List[Char])(bits: List[Bit]): List[Bit] = {
 					if (text.isEmpty) {
 						bits
@@ -334,11 +332,11 @@ def weight(tree: CodeTree): Int = {
 
 			type CodeTable = List[(Char, List[Bit])]
 
-					/**
-					 * This function returns the bit sequence that represents the character `char` in
-					 * the code table `table`.
-					 */
-					def codeBits(table: CodeTable)(char: Char): List[Bit] = {
+			/**
+			 * This function returns the bit sequence that represents the character `char` in
+			 * the code table `table`.
+			 */
+			def codeBits(table: CodeTable)(char: Char): List[Bit] = {
 				table.filter( (x) => x._1.equals(char))(0)._2
 			} 
 			/**
